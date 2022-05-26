@@ -1,0 +1,57 @@
+version: "3"
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:14.0
+    command: postgres -c 'max_connections=1000'
+    environment:
+      POSTGRES_DB: solana
+      POSTGRES_USER: solana-user
+      POSTGRES_PASSWORD: solana-pass
+    hostname: postgres
+    ports:
+      - 127.0.0.1:5432:5432
+    expose:
+      - "5432"
+    networks:
+      - net
+    healthcheck:
+      test: [ CMD-SHELL, "pg_isready -h postgres -p 5432" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 5s
+
+  validator:
+    container_name: validator
+    image: neonlabsorg/solana-accountsdb:${REVISION:-latest}
+    environment:
+      SOLANA_URL: http://validator:8899
+      RUST_LOG: solana_runtime::system_instruction_processor=debug,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
+      SOLANA_RUN_SH_VALIDATOR_ARGS: >
+        --accountsdb-plugin-config /opt/accountsdb-plugin-config.json
+    hostname: validator
+    ports:
+      - 0.0.0.0:8899:8899
+    expose:
+      - "8899"
+      - "9900"
+      - "8900"
+      - "8001"
+      - "8001-8009/udp"
+    networks:
+      - net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # Must be available from outside (calling without -u causes premature result)
+      test: [ CMD-SHELL, "solana cluster-version -u http://validator:8899" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+networks:
+  net:
