@@ -22,6 +22,19 @@ services:
       timeout: 10s
       retries: 10
       start_period: 5s
+      
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: il@neonlabs.org
+      PGADMIN_DEFAULT_PASSWORD: qazwsx
+    ports:
+      - 127.0.0.1:8080:80
+    volumes:
+      - ./scripts/server.json:/pgadmin4/servers.json
+    networks:
+      - net
 
   validator:
     container_name: validator
