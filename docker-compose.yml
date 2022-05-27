@@ -35,6 +35,9 @@ services:
       - ./scripts/server.json:/pgadmin4/servers.json
     networks:
       - net
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   validator:
     container_name: validator
